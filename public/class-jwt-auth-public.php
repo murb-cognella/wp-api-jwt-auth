@@ -209,6 +209,7 @@ class Jwt_Auth_Public {
 	 * @return (int|bool)
 	 */
 	public function determine_current_user( $user ) {
+		error_log("In determine_current_user");
 		/**
 		 * This hook only should run on the REST API requests to determine
 		 * if the user in the Token (if any) is valid, for any other
@@ -222,7 +223,9 @@ class Jwt_Auth_Public {
 		$is_rest_request_constant_defined = defined( 'REST_REQUEST' ) && REST_REQUEST;
 		$is_rest_request                  = $is_rest_request_constant_defined || strpos( $requested_url,
 				$rest_api_slug );
+		error_log("requested url: $requested_url, rest_api_slug: $rest_api_slug, is_rest_request: $is_rest_request");
 		if ( $is_rest_request && $user ) {
+			error_log("is_rest_request and user is set, returning user: " . $user);
 			return $user;
 		}
 
@@ -245,6 +248,7 @@ class Jwt_Auth_Public {
 		}
 
 		if ( ! $auth_header ) {
+			error_log("no auth header, determine_current_user returning " . $user);
 			return $user;
 		}
 
@@ -252,6 +256,7 @@ class Jwt_Auth_Public {
 		 * Check if the auth header is not bearer, if so, return the user
 		 */
 		if ( strpos( $auth_header, 'Bearer' ) !== 0 ) {
+			error_log("no token, determine_current_user returning " . $user);
 			return $user;
 		}
 
@@ -270,6 +275,7 @@ class Jwt_Auth_Public {
 		}
 
 		/** Everything is ok, return the user ID stored in the token*/
+		error_log("determine_current_user returning " . $token->data->user->id);
 		return $token->data->user->id;
 	}
 
@@ -440,6 +446,7 @@ class Jwt_Auth_Public {
 
 	public function sessionize_token() {
 		error_log("sessionize_token_from_init called");
+		error_log("Request URI here is: " . $_SERVER['REQUEST_URI']);
 		error_log("REQUEST is " . print_r($_REQUEST, true));
 		foreach ($_COOKIE as $key=>$val) {
     		error_log("COOKIE: " . $key.' is '.$val );
@@ -464,13 +471,24 @@ class Jwt_Auth_Public {
 			if ( $auth_header && strpos( $auth_header, 'Bearer' ) === 0) {
 				error_log("have a tokenized redirect, going to make a user session and try again");
 
+				error_log('before validate_token, have current user ' . wp_get_current_user()->ID);
 				$token = $this->validate_token( new WP_REST_Request(), $auth_header );
 
 				if ( ! is_wp_error( $token ) ) {
-					error_log("setting current user to " . $token->data->user->id);
-					@session_start();
-					wp_set_auth_cookie($token->data->user->id, true);
-					wp_set_current_user($token->data->user->id);
+					if ( wp_get_current_user()->ID == $token->data->user->id ) {
+						error_log("current user is the same as token user, no need to set session");
+					} else {
+						error_log("setting current user to " . $token->data->user->id);
+						@session_start();
+						wp_set_auth_cookie($token->data->user->id, true);
+						wp_set_current_user($token->data->user->id);
+					}
+					// error_log("setting current user to " . $token->data->user->id);
+					// @session_start();
+					// wp_set_auth_cookie($token->data->user->id, true);
+					// wp_set_current_user($token->data->user->id);
+				} else {
+					error_log("token validation failed, not setting session");
 				}
 			}
 		}
