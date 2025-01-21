@@ -445,22 +445,10 @@ class Jwt_Auth_Public {
 	}
 
 	public function sessionize_token() {
-		error_log("sessionize_token_from_init called");
-		error_log("Request URI here is: " . $_SERVER['REQUEST_URI']);
-		error_log("REQUEST is " . print_r($_REQUEST, true));
-		foreach ($_COOKIE as $key=>$val) {
-    		error_log("COOKIE: " . $key.' is '.$val );
-  		}
-		error_log("is_user_logged_in: " . (is_user_logged_in() ? 'true' : 'false'));
-		error_log("request_uri is " . $_SERVER['REQUEST_URI']);
-
 		$reauth = isset($_REQUEST['reauth']) ? $_REQUEST['reauth'] : '0';
 		$redirect_to = isset($_REQUEST['redirect_to']) ? $_REQUEST['redirect_to'] : '';
 
-		error_log("reauth: " . $reauth);
-		error_log("redirect_to: " . $redirect_to);
 		if ($reauth == '0' && $redirect_to === '' ) {
-			error_log("criteria possibly met for sessionize_token");
 
 			$auth_header = ! empty( $_SERVER['HTTP_AUTHORIZATION'] ) ? sanitize_text_field( $_SERVER['HTTP_AUTHORIZATION'] ) : false;
 			/* Double check for different auth header string (server dependent) */
@@ -469,27 +457,16 @@ class Jwt_Auth_Public {
 			}
 
 			if ( $auth_header && strpos( $auth_header, 'Bearer' ) === 0) {
-				error_log("have a tokenized redirect, going to make a user session and try again");
-
-				error_log('before validate_token, have current user ' . wp_get_current_user()->ID);
 				$token = $this->validate_token( new WP_REST_Request(), $auth_header );
 
 				if ( ! is_wp_error( $token ) ) {
-					if ( wp_get_current_user()->ID == $token->data->user->id ) {
-						error_log("current user is the same as token user, no need to set session");
-					} else {
-						error_log("setting current user to " . $token->data->user->id);
+					if ( !wp_get_current_user()->ID == $token->data->user->id ) {
 						@session_start();
 						wp_set_auth_cookie($token->data->user->id, true);
 						wp_set_current_user($token->data->user->id);
-					}
-					// error_log("setting current user to " . $token->data->user->id);
-					// @session_start();
-					// wp_set_auth_cookie($token->data->user->id, true);
-					// wp_set_current_user($token->data->user->id);
-				} else {
-					error_log("token validation failed, not setting session");
-				}
+						remove_filter( 'rest_authentication_errors', 'rest_cookie_check_errors', 100 );
+					} 
+				} 
 			}
 		}
 	}
