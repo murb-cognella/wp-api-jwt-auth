@@ -8,16 +8,16 @@
  * registers the activation and deactivation functions, and defines a function
  * that starts the plugin.
  *
- * @link              https://enriquechavez.co
+ * @link              https://github.com/murb-cognella/wp-api-jwt-auth
  * @since             1.0.0
  *
  * @wordpress-plugin
  * Plugin Name:       JWT Authentication for WP-API
- * Plugin URI:        https://enriquechavez.co
+ * Plugin URI:        https://github.com/murb-cognella/wp-api-jwt-auth
  * Description:       Extends the WP REST API using JSON Web Tokens Authentication as an authentication method.
  * Version:           1.3.4
- * Author:            Enrique Chavez
- * Author URI:        https://enriquechavez.co
+ * Author:            Michal Urbanski
+ * Author URI:        https://github.com/murb-cognella/wp-api-jwt-auth
  * License:           GPL-2.0+
  * License URI:       http://www.gnu.org/licenses/gpl-2.0.txt
  * Text Domain:       jwt-auth
@@ -63,6 +63,13 @@ function jwt_auth_share_data() {
  * Hook into the action that'll fire every week
  */
 add_action( 'jwt_auth_share_data', 'jwt_auth_share_data' );
+
+add_filter('site_transient_update_plugins', function ($value) {
+    if (isset($value->response['wp-api-jwt-auth/jwt-auth.php'])) {
+        unset($value->response['wp-api-jwt-auth/jwt-auth.php']);
+    }
+    return $value;
+});
 
 /**
  * This runs during plugin deactivation.
