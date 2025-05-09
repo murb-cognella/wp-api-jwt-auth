@@ -209,7 +209,7 @@ class Jwt_Auth_Public {
 	 * @return (int|bool)
 	 */
 	public function determine_current_user( $user ) {
-		error_log("In determine_current_user");
+		// error_log("In determine_current_user");
 		/**
 		 * This hook only should run on the REST API requests to determine
 		 * if the user in the Token (if any) is valid, for any other
@@ -223,9 +223,9 @@ class Jwt_Auth_Public {
 		$is_rest_request_constant_defined = defined( 'REST_REQUEST' ) && REST_REQUEST;
 		$is_rest_request                  = $is_rest_request_constant_defined || strpos( $requested_url,
 				$rest_api_slug );
-		error_log("requested url: $requested_url, rest_api_slug: $rest_api_slug, is_rest_request: $is_rest_request");
+		// error_log("requested url: $requested_url, rest_api_slug: $rest_api_slug, is_rest_request: $is_rest_request");
 		if ( $is_rest_request && $user ) {
-			error_log("is_rest_request and user is set, returning user: " . $user);
+			// error_log("is_rest_request and user is set, returning user: " . $user);
 			return $user;
 		}
 
@@ -248,7 +248,7 @@ class Jwt_Auth_Public {
 		}
 
 		if ( ! $auth_header ) {
-			error_log("no auth header, determine_current_user returning " . $user);
+			// error_log("no auth header, determine_current_user returning " . $user);
 			return $user;
 		}
 
@@ -256,7 +256,7 @@ class Jwt_Auth_Public {
 		 * Check if the auth header is not bearer, if so, return the user
 		 */
 		if ( strpos( $auth_header, 'Bearer' ) !== 0 ) {
-			error_log("no token, determine_current_user returning " . $user);
+			// error_log("no token, determine_current_user returning " . $user);
 			return $user;
 		}
 
@@ -275,7 +275,7 @@ class Jwt_Auth_Public {
 		}
 
 		/** Everything is ok, return the user ID stored in the token*/
-		error_log("determine_current_user returning " . $token->data->user->id);
+		// error_log("determine_current_user returning " . $token->data->user->id);
 		return $token->data->user->id;
 	}
 
@@ -465,7 +465,9 @@ class Jwt_Auth_Public {
 						wp_set_auth_cookie($token->data->user->id, true);
 						wp_set_current_user($token->data->user->id);
 						remove_filter( 'rest_authentication_errors', 'rest_cookie_check_errors', 100 );
-					} 
+					} else {
+						wp_set_auth_cookie($token->data->user->id, true);
+					}
 				} 
 			}
 		}
